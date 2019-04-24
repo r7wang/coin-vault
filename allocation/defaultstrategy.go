@@ -9,7 +9,24 @@ func (s DefaultStrategy) Allocate(
 	totalContribution int64,
 	rrspContributionLimit int64,
 	tfsaContributionLimit int64,
-) utils.Balance {
+) Allocation {
 
-	return utils.Balance{}
+	remainingContribution := totalContribution
+
+	// TFSA (1).
+	tfsaContribution := utils.Min(remainingContribution, tfsaContributionLimit)
+	remainingContribution -= tfsaContribution
+
+	// RRSP (2).
+	rrspContribution := utils.Min(remainingContribution, rrspContributionLimit)
+	remainingContribution -= rrspContribution
+
+	// Cash (3).
+	cashContribution := remainingContribution
+
+	return Allocation{
+		Cash: cashContribution,
+		RRSP: rrspContribution,
+		TFSA: tfsaContribution,
+	}
 }

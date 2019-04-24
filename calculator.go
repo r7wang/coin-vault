@@ -22,11 +22,9 @@ func NewCalculator(inflationRate float64) Calculator {
 	}
 }
 
-// NetIncome returns net income based on taxation.
-func (c Calculator) NetIncome(grossIncome int64, yearOffset int) int64 {
-	totalTax := c.taxBrackets.TotalTax(grossIncome, c.inflationRate, yearOffset)
-	netIncome := grossIncome - totalTax
-	return netIncome
+// Tax returns total tax on gross income.
+func (c Calculator) Tax(grossIncome int64, yearOffset int) int64 {
+	return c.taxBrackets.TotalTax(grossIncome, c.inflationRate, yearOffset)
 }
 
 // RRSPContributionLimit returns the maximum amount that can be contributed to an RRSP, given income.

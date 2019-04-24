@@ -8,5 +8,5 @@ type Strategy interface {
 		currentBalance utils.Balance,
 		totalContribution int64,
 		rrspContributionLimit int64,
-		tfsaContributionLimit int64) utils.Balance
+		tfsaContributionLimit int64) Allocation
 }

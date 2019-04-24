@@ -14,7 +14,7 @@ type InflationStrategy struct {
 func NewInflationStrategy(
 	baseIncome int64,
 	inflationRate float64,
-) InflationStrategy {
+) Strategy {
 
 	return InflationStrategy{
 		baseIncome:    baseIncome,
@@ -23,7 +23,7 @@ func NewInflationStrategy(
 }
 
 func (s InflationStrategy) Gross(yearOffset int) int64 {
-	adjRate := math.Pow(s.inflationRate, float64(yearOffset))
-	adjIncome := float64(s.baseIncome) * adjRate
+	adjMultiple := math.Pow(1+s.inflationRate, float64(yearOffset))
+	adjIncome := float64(s.baseIncome) * adjMultiple
 	return int64(adjIncome)
 }
