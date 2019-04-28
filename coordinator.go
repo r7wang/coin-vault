@@ -7,6 +7,9 @@ import (
 	"github.com/r7wang/coin-vault/contribution"
 	"github.com/r7wang/coin-vault/growth"
 	"github.com/r7wang/coin-vault/income"
+	"github.com/r7wang/coin-vault/rrsp"
+	"github.com/r7wang/coin-vault/tax"
+	"github.com/r7wang/coin-vault/tfsa"
 	"github.com/r7wang/coin-vault/utils"
 )
 
@@ -14,9 +17,11 @@ import (
 type Coordinator struct {
 	growthStrategy       growth.Strategy
 	incomeStrategy       income.Strategy
+	taxStrategy          tax.Strategy
 	contributionStrategy contribution.Strategy
 	allocationStrategy   allocation.Strategy
-	calculator           Calculator
+	rrspCalculator       rrsp.Calculator
+	tfsaCalculator       tfsa.Calculator
 	taxReturns           map[int]int64
 }
 
@@ -44,11 +49,18 @@ func (c Coordinator) Run(
 		startBalance := currentBalance
 		growthRate := c.growthStrategy.Rate(i)
 		currentBalance.Grow(growthRate)
+
+		taxBrackets := c.taxStrategy.Brackets(i)
 		grossIncome := c.incomeStrategy.Gross(i)
-		regularTax := c.calculator.Tax(grossIncome, i)
-		rrspContributionLimit := c.calculator.RRSPContributionLimit(grossIncome, i)
-		tfsaContributionLimit := c.calculator.TFSAContributionLimit(i)
+		regularTax := taxBrackets.TotalTax(grossIncome)
+		rrspContributionLimit := c.rrspCalculator.ContributionLimit(grossIncome, i)
+		tfsaContributionLimit := c.tfsaCalculator.ContributionLimit(i)
 		taxReturn := c.getTaxReturn(i)
+
+		fmt.Println("startBalance", startBalance)
+		fmt.Println("currentBalance", currentBalance)
+		fmt.Println("grossIncome", grossIncome)
+		fmt.Println("regularTax", regularTax)
 
 		netIncome := grossIncome - regularTax
 		totalContribution := c.contributionStrategy.Amount(
@@ -62,27 +74,26 @@ func (c Coordinator) Run(
 			totalContribution,
 			rrspContributionLimit,
 			tfsaContributionLimit)
-		currentBalance.TFSA += allocation.TFSA
-		currentBalance.TFSARoom += tfsaContributionLimit - allocation.TFSA
-		currentBalance.RRSP += allocation.RRSP
-		currentBalance.RRSPRoom += rrspContributionLimit - allocation.RRSP
-		currentBalance.CashBook += allocation.Cash
-		currentBalance.CashMarket += allocation.Cash
+		currentBalance.AccumulateCash(allocation.Cash)
+		currentBalance.AccumulateRRSP(allocation.RRSP, rrspContributionLimit)
+		currentBalance.AccumulateTFSA(allocation.TFSA, tfsaContributionLimit)
 
 		// Update future tax returns.
 		reducedIncome := grossIncome - allocation.RRSP
-		reducedTax := c.calculator.Tax(reducedIncome, i)
+		reducedTax := taxBrackets.TotalTax(reducedIncome)
 		c.setTaxReturn(i, regularTax-reducedTax)
 
-		node := EventNode{
-			InitialBalance: startBalance,
-			NextBalance:    currentBalance,
-			GrossIncome:    grossIncome,
-			NetIncome:      netIncome,
-			TaxReturn:      taxReturn,
-			NextTaxReturn:  regularTax - reducedTax,
-		}
-		fmt.Println(node)
+		/*
+			node := EventNode{
+				InitialBalance: startBalance,
+				NextBalance:    currentBalance,
+				GrossIncome:    grossIncome,
+				NetIncome:      netIncome,
+				TaxReturn:      taxReturn,
+				NextTaxReturn:  regularTax - reducedTax,
+			}
+		*/
+		//fmt.Println(node)
 	}
 
 	// TODO: Do something with the output, save or print it.

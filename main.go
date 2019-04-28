@@ -5,6 +5,9 @@ import (
 	"github.com/r7wang/coin-vault/contribution"
 	"github.com/r7wang/coin-vault/growth"
 	"github.com/r7wang/coin-vault/income"
+	"github.com/r7wang/coin-vault/rrsp"
+	"github.com/r7wang/coin-vault/tax"
+	"github.com/r7wang/coin-vault/tfsa"
 	"github.com/r7wang/coin-vault/utils"
 )
 
@@ -30,9 +33,11 @@ func main() {
 	coord := Coordinator{
 		growthStrategy:       growth.NewStaticRateStrategy(growthRate),
 		incomeStrategy:       income.NewInflationStrategy(baseSalary, inflationRate),
+		taxStrategy:          tax.NewInflationStrategy(inflationRate),
 		contributionStrategy: contribution.RegisteredStrategy{},
 		allocationStrategy:   allocation.DefaultStrategy{},
-		calculator:           NewCalculator(inflationRate),
+		rrspCalculator:       rrsp.NewCalculator(inflationRate),
+		tfsaCalculator:       tfsa.NewCalculator(inflationRate),
 		taxReturns:           make(map[int]int64),
 	}
 	coord.Run(initialAge, retirementAge, initialBalance)
