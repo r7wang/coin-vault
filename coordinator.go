@@ -29,10 +29,10 @@ type Coordinator struct {
 func (c Coordinator) Run(
 	initialAge int,
 	retirementAge int,
-	initialBalance utils.Balance) {
+	initialBalance utils.Balance) error {
 
 	if initialAge > retirementAge {
-		panic("Initial age greater than retirement age.")
+		return fmt.Errorf("initial age greater than retirement age")
 	}
 
 	currentBalance := initialBalance
@@ -50,7 +50,10 @@ func (c Coordinator) Run(
 		growthRate := c.growthStrategy.Rate(i)
 		currentBalance.Grow(growthRate)
 
-		taxBrackets := c.taxStrategy.Brackets(i)
+		taxBrackets, err := c.taxStrategy.GetBrackets(i)
+		if err != nil {
+			return err
+		}
 		grossIncome := c.incomeStrategy.Gross(i)
 		regularTax := taxBrackets.TotalTax(grossIncome)
 		rrspContributionLimit := c.rrspCalculator.ContributionLimit(grossIncome, i)
@@ -59,6 +62,7 @@ func (c Coordinator) Run(
 
 		fmt.Println("startBalance", startBalance)
 		fmt.Println("currentBalance", currentBalance)
+		fmt.Println("taxBrackets", taxBrackets.Definitions)
 		fmt.Println("grossIncome", grossIncome)
 		fmt.Println("regularTax", regularTax)
 
@@ -97,7 +101,7 @@ func (c Coordinator) Run(
 	}
 
 	// TODO: Do something with the output, save or print it.
-	return
+	return nil
 }
 
 func (c Coordinator) getTaxReturn(yearOffset int) int64 {

@@ -16,11 +16,11 @@ func Inflate(t *testing.T) {
 		expected   int64
 	}{
 		{
-			name:       "with zero input",
-			inputVal:   0,
+			name:       "with no time and no inflation",
+			inputVal:   100,
 			rate:       0,
 			iterations: 0,
-			expected:   0,
+			expected:   100,
 		},
 		{
 			name:       "with zero input and growth",

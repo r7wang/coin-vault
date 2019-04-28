@@ -40,5 +40,8 @@ func main() {
 		tfsaCalculator:       tfsa.NewCalculator(inflationRate),
 		taxReturns:           make(map[int]int64),
 	}
-	coord.Run(initialAge, retirementAge, initialBalance)
+	err := coord.Run(initialAge, retirementAge, initialBalance)
+	if err != nil {
+		panic(err)
+	}
 }

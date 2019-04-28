@@ -6,7 +6,7 @@ import (
 
 // InflationStrategy :
 //	* Inflation rate does not change.
-//	* Salary increases year-over-year in direct proportion to the rate of inflation.
+//	* Brackets increase year-over-year in direct proportion to the rate of inflation.
 type InflationStrategy struct {
 	inflationRate float64
 }
@@ -17,17 +17,18 @@ func NewInflationStrategy(inflationRate float64) Strategy {
 	}
 }
 
-func (s InflationStrategy) Brackets(yearOffset int) Brackets {
+func (s InflationStrategy) GetBrackets(yearOffset int) (Brackets, error) {
 	defaultBrackets, err := DefaultBrackets()
 	if err != nil {
-		panic("Could not determine default tax brackets.")
+		return Brackets{}, err
 	}
-	for _, bracket := range defaultBrackets.Definitions {
-		bracket.BaseIncome = utils.Inflate(
-			bracket.BaseIncome,
+
+	for idx := range defaultBrackets.Definitions {
+		defaultBrackets.Definitions[idx].BaseIncome = utils.Inflate(
+			defaultBrackets.Definitions[idx].BaseIncome,
 			s.inflationRate,
 			yearOffset)
 	}
 
-	return defaultBrackets
+	return defaultBrackets, nil
 }
